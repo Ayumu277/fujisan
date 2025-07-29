@@ -1,0 +1,215 @@
+# ABDSシステム - Docker Compose 設定
+# 開発環境用設定（ホットリロード対応）
+
+version: '3.8'
+
+services:
+  # PostgreSQL データベース
+  postgres:
+    image: postgres:15-alpine
+    container_name: abds-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-abds_db}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - abds-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-abds_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis キャッシュ
+  redis:
+    image: redis:7-alpine
+    container_name: abds-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - abds-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin - データベース管理ツール（オプション）
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: abds-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      - postgres
+    networks:
+      - abds-network
+    restart: unless-stopped
+    profiles:
+      - tools
+
+  # バックエンドAPI (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: abds-backend
+    environment:
+      # データベース設定
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-abds_db}
+      POSTGRES_SERVER: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-abds_db}
+      POSTGRES_PORT: 5432
+
+      # Redis設定
+      REDIS_URL: redis://redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+
+      # API キー
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+
+      # セキュリティ
+      SECRET_KEY: ${SECRET_KEY:-your-very-secret-key-change-this-in-production}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+
+      # アプリケーション設定
+      DEBUG: ${DEBUG:-true}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      PROJECT_NAME: "ABDS System"
+      API_V1_STR: "/api/v1"
+
+      # CORS設定
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-http://localhost:3000,http://localhost:8080,http://frontend:3000}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      # ホットリロード用ボリュームマウント
+      - ./backend/app:/app/app:rw
+      - ./backend/requirements.txt:/app/requirements.txt:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - abds-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # フロントエンド (React + Vite)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: abds-frontend
+    environment:
+      # API設定
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://backend:8000}
+
+      # アプリケーション設定
+      VITE_APP_NAME: "ABDS System"
+      VITE_ENVIRONMENT: ${ENVIRONMENT:-development}
+
+      # API キー（フロントエンド用）
+      VITE_GOOGLE_API_KEY: ${VITE_GOOGLE_API_KEY}
+
+      # 開発設定
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      # ホットリロード用ボリュームマウント
+      - ./frontend/src:/app/src:rw
+      - ./frontend/public:/app/public:rw
+      - ./frontend/package.json:/app/package.json:ro
+      - ./frontend/package-lock.json:/app/package-lock.json:ro
+      - ./frontend/vite.config.ts:/app/vite.config.ts:ro
+      - ./frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ./frontend/tsconfig.node.json:/app/tsconfig.node.json:ro
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js:ro
+      - ./frontend/postcss.config.js:/app/postcss.config.js:ro
+      - ./frontend/index.html:/app/index.html:ro
+      # node_modules は除外（パフォーマンス向上）
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - abds-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: npm run dev -- --host 0.0.0.0 --port 3000
+
+  # Nginx リバースプロキシ（本番環境用）
+  nginx:
+    image: nginx:alpine
+    container_name: abds-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - abds-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+# ボリューム定義
+volumes:
+  postgres_data:
+    driver: local
+    name: abds_postgres_data
+  redis_data:
+    driver: local
+    name: abds_redis_data
+  pgadmin_data:
+    driver: local
+    name: abds_pgadmin_data
+  nginx_logs:
+    driver: local
+    name: abds_nginx_logs
+
+# ネットワーク定義
+networks:
+  abds-network:
+    driver: bridge
+    name: abds_network
