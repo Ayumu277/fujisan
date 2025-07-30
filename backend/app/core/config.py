@@ -1,52 +1,55 @@
 """
-ABDSシステム - アプリケーション設定
+ABDSシステム - アプリケーション設定（簡略版）
 """
 
 import os
-from typing import List
-
-from pydantic import BaseSettings
+from typing import List, Optional
 
 
-class Settings(BaseSettings):
-    """
-    アプリケーション設定クラス
-    """
+class Settings:
+    """アプリケーション設定クラス（簡略版）"""
 
-    # アプリケーション設定
     PROJECT_NAME: str = "ABDS System"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = True
 
-    # セキュリティ設定
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    # データベース設定（開発用SQLite）
+    DATABASE_URL: str = "sqlite:///./abds_dev.db"
+
+    # ファイル設定
+    UPLOAD_DIR: str = "uploads"
+    MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
+    ALLOWED_EXTENSIONS: List[str] = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 
     # CORS設定
-    ALLOWED_HOSTS: List[str] = ["http://localhost:3000", "http://localhost:8080"]
+    ALLOWED_HOSTS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://frontend:3000"
+    ]
 
-    # データベース設定
-    POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
-    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
-    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "password")
-    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "abds_db")
-    POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
+    # ログ設定
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-    @property
-    def DATABASE_URL(self) -> str:
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+    # Search API settings
+    GOOGLE_API_KEY: Optional[str] = None
+    GOOGLE_SEARCH_ENGINE_ID: Optional[str] = None
+    SERPAPI_KEY: Optional[str] = None
 
-    # Redis設定
-    REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
-    REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
-    REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
+    # AI分析API設定
+    GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY")
+    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
+    ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
 
-    # 開発モード
-    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
-
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
+    # AI分析設定
+    AI_ANALYSIS_ENABLED: bool = True
+    AI_MAX_REQUESTS_PER_MINUTE: int = 15
+    AI_MAX_TOKENS_PER_REQUEST: int = 32000
+    AI_DEFAULT_MODEL: str = "gemini-1.5-pro"
+    AI_BACKUP_MODEL: str = "gemini-1.5-flash"
 
 
 settings = Settings()

@@ -1,36 +1,76 @@
 # ABDSシステム - Python依存関係
 
 # FastAPI フレームワーク
-fastapi==0.104.1
+fastapi==0.109.0
 uvicorn[standard]==0.24.0
 
 # データベース関連
-sqlalchemy==2.0.23
+sqlalchemy==2.0.25
+alembic==1.13.1
 psycopg2-binary==2.9.9
-alembic==1.12.1
 
 # Redis
 redis==5.0.1
 
-# Pydantic設定管理
-pydantic[email]==2.5.0
-pydantic-settings==2.0.3
+# ファイルアップロード・処理
+python-multipart==0.0.6
+pillow==10.2.0
+
+# 画像・動画処理
+opencv-python==4.9.0.80
+
+# HTTP クライアント
+httpx==0.26.0
+
+# Web スクレイピング・ブラウザ自動化
+beautifulsoup4==4.12.2
+selenium==4.16.0
+webdriver-manager==4.0.1
+lxml==4.9.3
+newspaper3k==0.2.8
+readability-lxml==0.8.1
+aiohttp==3.9.1
+python-magic==0.4.27
+
+# AI・機械学習
+google-generativeai==0.3.2
+openai==1.6.1
+anthropic==0.8.1
 
 # セキュリティ
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
 
-# HTTP クライアント
-httpx==0.25.2
+# 環境変数管理
+python-dotenv==1.0.0
+
+# Pydantic設定管理
+pydantic[email]==2.5.3
+pydantic-settings==2.1.0
 
 # ユーティリティ
-python-dotenv==1.0.0
 email-validator==2.1.0
 
+# 検索API・ドメイン分析
+google-api-python-client==2.116.0
+serpapi==2.0.0
+slowapi==0.1.9
+limits==3.8.0
+python-whois==0.8.0
+tldextract==5.1.1
+
 # 開発用
-pytest==7.4.3
-pytest-asyncio==0.21.1
-black==23.11.0
-isort==5.12.0
-flake8==6.1.0
+pytest==7.4.4
+pytest-asyncio==0.23.2
+black==23.12.1
+isort==5.13.2
+flake8==7.0.0
+
+# 既存のパッケージに加えて以下を追加
+aiohttp==3.9.1
+beautifulsoup4==4.12.2
+selenium==4.16.0
+webdriver-manager==4.0.1
+readability-lxml==0.8.1
+lxml==4.9.3
+httpx==0.25.2

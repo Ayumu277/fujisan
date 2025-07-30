@@ -1,0 +1,29 @@
+"""
+ABDSシステム - APIルーター
+すべてのAPIエンドポイントを統合
+"""
+
+from fastapi import APIRouter
+
+from app.api.endpoints import images
+
+# メインAPIルーター
+api_router = APIRouter(prefix="/api/v1")
+
+# 各エンドポイントルーターを含める
+api_router.include_router(
+    images.router,
+    tags=["Images"]
+)
+
+# ヘルスチェック用の簡単なエンドポイント
+@api_router.get("/health", tags=["Health"])
+async def health_check():
+    """
+    APIヘルスチェック
+    """
+    return {
+        "status": "healthy",
+        "message": "ABDS System API is running",
+        "version": "1.0.0"
+    }
