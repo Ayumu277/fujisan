@@ -1,9 +1,11 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import { BarChart3, Home, Settings, Search, Shield, Upload as UploadIcon } from 'lucide-react';
+import { BarChart3, Home, Settings as SettingsIcon, Search, Shield, Upload as UploadIcon } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import SearchResults from './pages/SearchResults';
+import AnalysisDetail from './pages/AnalysisDetail';
+import Settings from './pages/Settings';
 
 // ホームページコンポーネント
 const HomePage = () => {
@@ -12,7 +14,7 @@ const HomePage = () => {
       <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary-600 mb-2">
-            ABDSシステム
+            Fujisan
           </h1>
           <p className="text-gray-600">
             アプリケーション画像不正利用検出システム
@@ -155,6 +157,9 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/search-results" element={<SearchResults />} />
+          <Route path="/search-results/:analysisId" element={<AnalysisDetail />} />
+          <Route path="/analysis/:analysisId" element={<AnalysisDetail />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/search" element={<div className="p-8 text-center text-gray-500">画像検索機能（開発中）</div>} />
           <Route path="/analysis" element={<div className="p-8 text-center text-gray-500">脅威分析機能（開発中）</div>} />
           <Route path="/404" element={<NotFound />} />
