@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } f
 import { BarChart3, Home, Settings, Search, Shield, Upload as UploadIcon } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
+import SearchResults from './pages/SearchResults';
 
 // ホームページコンポーネント
 const HomePage = () => {
@@ -153,6 +154,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/upload" element={<Upload />} />
+          <Route path="/search-results" element={<SearchResults />} />
           <Route path="/search" element={<div className="p-8 text-center text-gray-500">画像検索機能（開発中）</div>} />
           <Route path="/analysis" element={<div className="p-8 text-center text-gray-500">脅威分析機能（開発中）</div>} />
           <Route path="/404" element={<NotFound />} />
