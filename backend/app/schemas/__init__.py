@@ -96,6 +96,25 @@ from app.schemas.ai_analysis import (
     AnalysisMetadata
 )
 
+# 条件付きインポート - 脅威度分析関連
+try:
+    from app.schemas.analysis import (
+        ThreatLevel,
+        ComponentScore,
+        ThreatComponents,
+        ScoreMetadata,
+        ThreatAssessment,
+        ThreatAssessmentRequest,
+        ThreatAssessmentResponse,
+        BatchThreatAssessmentRequest,
+        BatchThreatAssessmentResponse,
+        ThreatScoreStatistics,
+        ThreatScoreConfig,
+        ThreatAssessmentSummary,
+    )
+except ImportError:
+    pass
+
 __all__ = [
     # Image schemas
     "ImageUploadResponse",

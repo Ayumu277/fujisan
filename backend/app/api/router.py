@@ -29,6 +29,11 @@ try:
 except ImportError:
     scraping = None
 
+try:
+    from app.api.endpoints import threat_scoring
+except ImportError:
+    threat_scoring = None
+
 # メインAPIルーター
 api_router = APIRouter(prefix="/api/v1")
 
@@ -70,6 +75,13 @@ if scraping:
         scraping.router,
         prefix="/scraping",
         tags=["scraping"],
+        responses={404: {"description": "Not found"}}
+    )
+
+if threat_scoring:
+    api_router.include_router(
+        threat_scoring.router,
+        tags=["threat-scoring"],
         responses={404: {"description": "Not found"}}
     )
 
